@@ -1,0 +1,24 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>{{ title or 'DDD Calculator' }}</title>
+    <link rel="stylesheet" as="style" crossorigin href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard-dynamic-subset.min.css">
+    <link rel="stylesheet" href="/static/style.css">
+  </head>
+  <body class="app">
+    <div class="container">
+      <header class="hero">
+        <h1>{{ t.app_title if t else 'DDD Calculator' }}</h1>
+        <p>{{ t.app_subtitle if t else 'Compute due dates by Days after Delivery (DDD) terms.' }}</p>
+      </header>
+      <main>
+        {% block content %}{% endblock %}
+      </main>
+      <footer class="site-footer">
+        <p>FastAPI + Jinja | {{ request.url.hostname }}</p>
+      </footer>
+    </div>
+  </body>
+  </html>

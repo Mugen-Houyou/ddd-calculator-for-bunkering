@@ -1,0 +1,577 @@
+{% extends 'base.html' %}
+{% block content %}
+
+<section class="card">
+  <form id="calcForm" action="/calculate" method="post">
+    <div class="row">
+      <label for="yyyy">{{ t.delivery_date }}</label>
+      <div class="segments">
+        <input type="text" id="yyyy" inputmode="numeric" pattern="\d{4}" maxlength="4" placeholder="YYYY" aria-label="Year" value="{{ (form.yyyy if form else '') }}" required>
+        <span class="seg-sep">-</span>
+        <input type="text" id="mm" inputmode="numeric" pattern="\d{1,2}" maxlength="2" placeholder="MM" aria-label="Month" value="{{ (form.mm if form else '') }}" required>
+        <span class="seg-sep">-</span>
+        <input type="text" id="dd" inputmode="numeric" pattern="\d{1,2}" maxlength="2" placeholder="DD" aria-label="Day" value="{{ (form.dd if form else '') }}" required>
+      </div>
+      <input type="hidden" id="delivery_date" name="delivery_date" value="">
+    </div>
+
+    <div class="row">
+      <label>{{ t.country_region }}</label>
+      <div id="selectedCountries" class="selected-tags">
+        <!-- Selected countries will appear here as tags -->
+      </div>
+      <select id="countrySelector" style="margin-top: 10px;">
+        <option value="">{{ t.add_country }}</option>
+        <optgroup label="{{ t.region_asia }}">
+          <option value="KR" data-name="Korea (대한민국)">Korea (대한민국)</option>
+          <option value="JP" data-name="Japan (日本)">Japan (日本)</option>
+          <option value="CN" data-name="China (中国)">China (中国)</option>
+          <option value="HK" data-name="Hong Kong (香港)">Hong Kong (香港)</option>
+          <option value="TW" data-name="Taiwan (台灣)">Taiwan (台灣)</option>
+          <option value="SG" data-name="Singapore">Singapore</option>
+          <option value="MY" data-name="Malaysia">Malaysia</option>
+          <option value="TH" data-name="Thailand">Thailand</option>
+          <option value="ID" data-name="Indonesia">Indonesia</option>
+          <option value="PH" data-name="Philippines">Philippines</option>
+          <option value="VN" data-name="Vietnam">Vietnam</option>
+          <option value="IN" data-name="India">India</option>
+        </optgroup>
+        <optgroup label="{{ t.region_middle_east }}">
+          <option value="UAE" data-name="United Arab Emirates">United Arab Emirates</option>
+          <option value="SA" data-name="Saudi Arabia">Saudi Arabia</option>
+        </optgroup>
+        <optgroup label="{{ t.region_europe }}">
+          <option value="GB" data-name="United Kingdom">United Kingdom</option>
+          <option value="DE" data-name="Germany">Germany</option>
+          <option value="FR" data-name="France">France</option>
+          <option value="IT" data-name="Italy">Italy</option>
+          <option value="ES" data-name="Spain">Spain</option>
+          <option value="NL" data-name="Netherlands">Netherlands</option>
+          <option value="BE" data-name="Belgium">Belgium</option>
+          <option value="GR" data-name="Greece">Greece</option>
+          <option value="NO" data-name="Norway">Norway</option>
+          <option value="SE" data-name="Sweden">Sweden</option>
+          <option value="DK" data-name="Denmark">Denmark</option>
+          <option value="FI" data-name="Finland">Finland</option>
+          <option value="PL" data-name="Poland">Poland</option>
+          <option value="RU" data-name="Russia">Russia</option>
+        </optgroup>
+        <optgroup label="{{ t.region_americas }}">
+          <option value="US" data-name="United States">United States</option>
+          <option value="CA" data-name="Canada">Canada</option>
+          <option value="MX" data-name="Mexico">Mexico</option>
+          <option value="BR" data-name="Brazil">Brazil</option>
+          <option value="AR" data-name="Argentina">Argentina</option>
+          <option value="CL" data-name="Chile">Chile</option>
+        </optgroup>
+        <optgroup label="{{ t.region_oceania }}">
+          <option value="AU" data-name="Australia">Australia</option>
+          <option value="NZ" data-name="New Zealand">New Zealand</option>
+        </optgroup>
+        <optgroup label="{{ t.region_africa }}">
+          <option value="ZA" data-name="South Africa">South Africa</option>
+        </optgroup>
+      </select>
+      <div id="countryHiddenInputs"></div>
+    </div>
+
+    <div class="row-grid">
+      <label for="term_kind">{{ t.payment_term }}
+        <select id="term_kind" name="term_kind" required onchange="toggleDays(this.value)">
+          <option value="DDD" {% if not form or form.term_kind=='DDD' %}selected{% endif %}>{{ t.ddd_full }}</option>
+          <option value="COD" {% if form and form.term_kind=='COD' %}selected{% endif %}>{{ t.cod_full }}</option>
+          <option value="CIA" {% if form and form.term_kind=='CIA' %}selected{% endif %}>{{ t.cia_full }}</option>
+        </select>
+      </label>
+      <div id="days_wrap">
+        <input type="number" id="days" name="days" placeholder="{{ t.days_label }}" aria-label="Days for DDD" min="0" step="1" value="{{ (form.days if form else '') }}">
+      </div>
+    </div>
+
+    <div class="actions">
+      <button type="submit" class="primary">{{ t.calculate_button }}</button>
+      <span class="muted">{{ t.example_text }}</span>
+    </div>
+  </form>
+
+  <section id="clientErrors" class="errors" style="display:none" aria-live="polite">
+    <ul id="clientErrorList"></ul>
+  </section>
+
+  {% if errors and errors|length %}
+    <section class="errors" aria-live="polite">
+      <ul>
+        {% for e in errors %}
+          <li>{{ e }}</li>
+        {% endfor %}
+      </ul>
+    </section>
+  {% endif %}
+
+  {% if result %}
+    <section class="result" style="margin-top: 20px;">
+      <div class="card">
+        <h2 style="margin-top: 0; font-size: 1.8rem; color: var(--primary);">{{ t.result_title }}: {{ result.due_date }}</h2>
+
+        <div style="margin-top: 16px; padding: 12px; background: rgba(37, 99, 235, 0.05); border-radius: 12px; border-left: 4px solid var(--primary);">
+          <p style="margin: 4px 0;"><strong>{{ t.delivery }}:</strong> {{ result.delivery_date }} + {{ result.days }} DDD</p>
+          <p style="margin: 4px 0;"><strong>{{ t.countries }}:</strong> {{ result.country_codes|join(', ') }}</p>
+        </div>
+
+        {% if result.excluded_weekends or result.excluded_holidays %}
+          <div style="margin-top: 16px;">
+            <h3 style="font-size: 1.1rem; margin-bottom: 8px;">{{ t.excluded_days }}</h3>
+
+            <!-- Calendar Visualization -->
+            <div id="calendarView" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 16px; margin-bottom: 16px;"></div>
+
+            {% if result.excluded_weekends %}
+              <details style="margin-bottom: 8px;">
+                <summary style="cursor: pointer; font-weight: 600; color: var(--muted); padding: 8px; background: rgba(148, 163, 184, 0.1); border-radius: 8px;">
+                  {{ t.weekends }} ({{ result.excluded_weekends|length }})
+                </summary>
+                <div style="margin-top: 8px; padding: 8px; max-height: 150px; overflow-y: auto;">
+                  {% for weekend in result.excluded_weekends %}
+                    <span class="date-badge">{{ weekend }}</span>
+                  {% endfor %}
+                </div>
+              </details>
+            {% endif %}
+
+            {% if result.excluded_holidays %}
+              <details style="margin-bottom: 8px;">
+                <summary style="cursor: pointer; font-weight: 600; color: var(--success); padding: 8px; background: rgba(18, 128, 90, 0.08); border-radius: 8px;">
+                  {{ t.holidays }} ({{ result.excluded_holidays|length }})
+                </summary>
+                <div style="margin-top: 8px; padding: 8px; max-height: 150px; overflow-y: auto;">
+                  {% for holiday in result.excluded_holidays %}
+                    <span class="date-badge holiday">{{ holiday }}</span>
+                  {% endfor %}
+                </div>
+              </details>
+            {% endif %}
+          </div>
+        {% endif %}
+      </div>
+    </section>
+  {% endif %}
+</section>
+
+<script>
+// Country selection management
+let selectedCountries = new Set();
+
+function renderCountryTags() {
+  const container = document.getElementById('selectedCountries');
+  const hiddenContainer = document.getElementById('countryHiddenInputs');
+
+  container.innerHTML = '';
+  hiddenContainer.innerHTML = '';
+
+  if (selectedCountries.size === 0) {
+    container.innerHTML = '<span style="color: #999;">{{ t.no_countries }}</span>';
+    return;
+  }
+
+  selectedCountries.forEach(code => {
+    const option = document.querySelector(`#countrySelector option[value="${code}"]`);
+    const name = option ? option.getAttribute('data-name') : code;
+
+    // Create tag element
+    const tag = document.createElement('span');
+    tag.className = 'country-tag';
+    tag.innerHTML = `
+      ${name}
+      <button type="button" class="remove-tag" onclick="removeCountry('${code}')" aria-label="Remove ${name}">×</button>
+    `;
+    container.appendChild(tag);
+
+    // Create hidden input for form submission
+    const hidden = document.createElement('input');
+    hidden.type = 'hidden';
+    hidden.name = 'country_code';
+    hidden.value = code;
+    hiddenContainer.appendChild(hidden);
+  });
+}
+
+function addCountry(code) {
+  if (code && !selectedCountries.has(code)) {
+    selectedCountries.add(code);
+    renderCountryTags();
+  }
+}
+
+function removeCountry(code) {
+  selectedCountries.delete(code);
+  renderCountryTags();
+}
+
+function initCountrySelector() {
+  const selector = document.getElementById('countrySelector');
+
+  // Initialize with form values or default to KR
+  {% if form and form.country_codes %}
+    {% for code in form.country_codes %}
+      selectedCountries.add('{{ code }}');
+    {% endfor %}
+  {% else %}
+    selectedCountries.add('KR');
+  {% endif %}
+
+  renderCountryTags();
+
+  // Handle country selection
+  selector.addEventListener('change', (e) => {
+    const code = e.target.value;
+    if (code) {
+      addCountry(code);
+      e.target.value = ''; // Reset dropdown
+    }
+  });
+}
+
+function onlyDigits(v) { return v.replace(/\D+/g, ''); }
+function clamp(n, min, max) { return Math.min(Math.max(n, min), max); }
+function pad2(n) { return String(n).padStart(2, '0'); }
+function isValidIsoDate(y, m, d) {
+  try {
+    const dt = new Date(`${y}-${pad2(m)}-${pad2(d)}`);
+    const yy = dt.getUTCFullYear();
+    const mm = dt.getUTCMonth() + 1;
+    const dd = dt.getUTCDate();
+    return yy === Number(y) && mm === Number(m) && dd === Number(d);
+  } catch { return false; }
+}
+
+function setupSegments() {
+  const y = document.getElementById('yyyy');
+  const m = document.getElementById('mm');
+  const d = document.getElementById('dd');
+  const hidden = document.getElementById('delivery_date');
+  const form = document.getElementById('calcForm');
+  const errBox = document.getElementById('clientErrors');
+  const errList = document.getElementById('clientErrorList');
+
+  [y, m, d].forEach((el) => {
+    el.addEventListener('input', (e) => {
+      const t = e.target;
+      t.value = onlyDigits(t.value);
+      if (t === y && t.value.length === 4) m.focus();
+      if (t === m && t.value.length === 2) d.focus();
+    });
+    el.addEventListener('blur', (e) => {
+      const t = e.target;
+      t.value = onlyDigits(t.value);
+      if (t === m && t.value) {
+        let val = clamp(Number(t.value), 1, 12);
+        t.value = pad2(val);
+      }
+      if (t === d && t.value) {
+        // Rough clamp 1..31; final validation uses real calendar
+        let val = clamp(Number(t.value), 1, 31);
+        t.value = pad2(val);
+      }
+    });
+  });
+
+  form.addEventListener('submit', (e) => {
+    errList.innerHTML = '';
+    errBox.style.display = 'none';
+    const yy = y.value;
+    const mm = m.value;
+    const dd = d.value;
+    if (yy.length !== 4 || !mm || !dd || !isValidIsoDate(yy, mm, dd)) {
+      e.preventDefault();
+      const li = document.createElement('li');
+      li.textContent = '{{ t.valid_date_required }}';
+      errList.appendChild(li);
+      errBox.style.display = 'block';
+      return false;
+    }
+    hidden.value = `${yy}-${pad2(mm)}-${pad2(dd)}`;
+  });
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+  initCountrySelector();
+  setupSegments();
+  const sel = document.getElementById('term_kind');
+  toggleDays(sel.value);
+
+  // Render calendar if result exists
+  {% if result %}
+    const deliveryDate = '{{ result.delivery_date }}';
+    const dueDate = '{{ result.due_date }}';
+    const excludedWeekends = {{ result.excluded_weekends | tojson }};
+    const excludedHolidays = {{ result.excluded_holidays | tojson }};
+    const holidayNames = {{ result.holiday_names | tojson }};
+    renderCalendar(deliveryDate, dueDate, excludedWeekends, excludedHolidays, holidayNames);
+  {% endif %}
+});
+
+function toggleDays(kind) {
+  const wrap = document.getElementById('days_wrap');
+  const inp = document.getElementById('days');
+  const show = (kind === 'DDD');
+  wrap.style.display = show ? 'block' : 'none';
+  inp.disabled = !show;
+}
+
+// Country code to name mapping
+const COUNTRY_NAMES = {
+  // Asia
+  'KR': 'South Korea',
+  'JP': 'Japan',
+  'CN': 'China',
+  'HK': 'Hong Kong',
+  'TW': 'Taiwan',
+  'SG': 'Singapore',
+  'MY': 'Malaysia',
+  'TH': 'Thailand',
+  'ID': 'Indonesia',
+  'PH': 'Philippines',
+  'VN': 'Vietnam',
+  'IN': 'India',
+  // Middle East
+  'UAE': 'UAE',
+  'SA': 'Saudi Arabia',
+  // Europe
+  'GB': 'United Kingdom',
+  'DE': 'Germany',
+  'FR': 'France',
+  'IT': 'Italy',
+  'ES': 'Spain',
+  'NL': 'Netherlands',
+  'BE': 'Belgium',
+  'GR': 'Greece',
+  'NO': 'Norway',
+  'SE': 'Sweden',
+  'DK': 'Denmark',
+  'FI': 'Finland',
+  'PL': 'Poland',
+  'RU': 'Russia',
+  // Americas
+  'US': 'United States',
+  'CA': 'Canada',
+  'MX': 'Mexico',
+  'BR': 'Brazil',
+  'AR': 'Argentina',
+  'CL': 'Chile',
+  // Oceania
+  'AU': 'Australia',
+  'NZ': 'New Zealand',
+  // Africa
+  'ZA': 'South Africa'
+};
+
+// Custom tooltip management
+let tooltipElement = null;
+
+function createTooltip() {
+  if (!tooltipElement) {
+    tooltipElement = document.createElement('div');
+    tooltipElement.className = 'custom-tooltip';
+    document.body.appendChild(tooltipElement);
+  }
+  return tooltipElement;
+}
+
+function showTooltip(text, targetElement) {
+  const tooltip = createTooltip();
+  tooltip.textContent = text;
+
+  const rect = targetElement.getBoundingClientRect();
+  const tooltipX = rect.left + rect.width / 2;
+  const tooltipY = rect.top - 8;
+
+  tooltip.style.left = tooltipX + 'px';
+  tooltip.style.top = tooltipY + 'px';
+
+  // Force reflow to enable transition
+  tooltip.offsetHeight;
+  tooltip.classList.add('visible');
+}
+
+function hideTooltip() {
+  if (tooltipElement) {
+    tooltipElement.classList.remove('visible');
+  }
+}
+
+// Calendar visualization
+function renderCalendar(deliveryDate, dueDate, excludedWeekends, excludedHolidays, holidayNames) {
+  const delivery = new Date(deliveryDate + 'T00:00:00');
+  const due = new Date(dueDate + 'T00:00:00');
+
+  // Convert excluded dates to sets for quick lookup
+  const excludedWeekendSet = new Set(excludedWeekends);
+  const excludedHolidaySet = new Set(excludedHolidays);
+
+  // Find the range of months to display
+  const startDate = new Date(delivery);
+  startDate.setDate(1); // First day of delivery month
+  const endDate = new Date(due);
+  endDate.setMonth(endDate.getMonth() + 1);
+  endDate.setDate(0); // Last day of due month
+
+  const container = document.getElementById('calendarView');
+  container.innerHTML = '';
+
+  // Generate calendars for each month in the range
+  let currentDate = new Date(startDate);
+  while (currentDate <= endDate) {
+    const monthCalendar = renderMonthCalendar(
+      currentDate,
+      delivery,
+      due,
+      excludedWeekendSet,
+      excludedHolidaySet,
+      holidayNames || {}
+    );
+    container.appendChild(monthCalendar);
+
+    // Move to next month
+    currentDate.setMonth(currentDate.getMonth() + 1);
+  }
+}
+
+function renderMonthCalendar(monthDate, delivery, due, excludedWeekendSet, excludedHolidaySet, holidayNames) {
+  const year = monthDate.getFullYear();
+  const month = monthDate.getMonth();
+
+  // Create month container
+  const monthContainer = document.createElement('div');
+  monthContainer.className = 'calendar-container';
+
+  // Month header
+  const header = document.createElement('div');
+  header.className = 'calendar-header';
+  const monthNames = ['January', 'February', 'March', 'April', 'May', 'June',
+                      'July', 'August', 'September', 'October', 'November', 'December'];
+  header.textContent = `${monthNames[month]} ${year}`;
+  monthContainer.appendChild(header);
+
+  // Calendar grid
+  const grid = document.createElement('div');
+  grid.className = 'calendar-grid';
+
+  // Day headers (Sun - Sat)
+  const dayHeaders = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+  dayHeaders.forEach(day => {
+    const dayHeader = document.createElement('div');
+    dayHeader.className = 'calendar-day-header';
+    dayHeader.textContent = day;
+    grid.appendChild(dayHeader);
+  });
+
+  // Get first day of month and number of days
+  const firstDay = new Date(year, month, 1).getDay();
+  const daysInMonth = new Date(year, month + 1, 0).getDate();
+
+  // Add empty cells for days before the first day of the month
+  for (let i = 0; i < firstDay; i++) {
+    const emptyDay = document.createElement('div');
+    emptyDay.className = 'calendar-day empty';
+    grid.appendChild(emptyDay);
+  }
+
+  // Add days of the month
+  for (let day = 1; day <= daysInMonth; day++) {
+    const date = new Date(year, month, day);
+    const dateString = formatDate(date);
+
+    const dayCell = document.createElement('div');
+    dayCell.className = 'calendar-day';
+    dayCell.textContent = day;
+
+    // Check if it's a weekend
+    const dayOfWeek = date.getDay();
+    if (dayOfWeek === 0 || dayOfWeek === 6) {
+      dayCell.classList.add('weekend');
+    }
+
+    // Check if it's the delivery date
+    if (formatDate(date) === formatDate(delivery)) {
+      dayCell.classList.add('delivery-date');
+      dayCell.dataset.tooltip = 'Delivery Date';
+    }
+    // Check if it's the due date
+    else if (formatDate(date) === formatDate(due)) {
+      dayCell.classList.add('due-date');
+      dayCell.dataset.tooltip = 'Due Date';
+    }
+    // Check if it's an excluded holiday
+    else if (excludedHolidaySet.has(dateString)) {
+      dayCell.classList.add('excluded-holiday');
+      // Build tooltip with holiday name(s) and country
+      // holidayNames structure: {date_string: {country_code: holiday_name}}
+      const countriesData = holidayNames[dateString] || {};
+      const tooltipParts = [];
+
+      for (const [countryCode, holidayName] of Object.entries(countriesData)) {
+        const countryName = COUNTRY_NAMES[countryCode] || countryCode;
+        tooltipParts.push(`${holidayName} (${countryName})`);
+      }
+
+      const tooltipText = tooltipParts.length > 0 ? tooltipParts.join(', ') : 'Holiday';
+      dayCell.dataset.tooltip = tooltipText;
+    }
+    // Check if it's an excluded weekend
+    else if (excludedWeekendSet.has(dateString)) {
+      dayCell.classList.add('excluded-weekend');
+      dayCell.dataset.tooltip = 'Excluded Weekend';
+    }
+
+    // Add tooltip event handlers if the cell has tooltip data
+    if (dayCell.dataset.tooltip) {
+      dayCell.addEventListener('mouseenter', function(e) {
+        showTooltip(e.target.dataset.tooltip, e.target);
+      });
+      dayCell.addEventListener('mouseleave', function() {
+        hideTooltip();
+      });
+    }
+
+    grid.appendChild(dayCell);
+  }
+
+  monthContainer.appendChild(grid);
+
+  // Add legend (only for the first month)
+  if (monthDate.getTime() === new Date(delivery.getFullYear(), delivery.getMonth(), 1).getTime()) {
+    const legend = document.createElement('div');
+    legend.className = 'calendar-legend';
+    legend.innerHTML = `
+      <div class="legend-item">
+        <div class="legend-color delivery"></div>
+        <span>Delivery Date</span>
+      </div>
+      <div class="legend-item">
+        <div class="legend-color due"></div>
+        <span>Due Date</span>
+      </div>
+      <div class="legend-item">
+        <div class="legend-color weekend"></div>
+        <span>Excluded Weekend</span>
+      </div>
+      <div class="legend-item">
+        <div class="legend-color holiday"></div>
+        <span>Excluded Holiday</span>
+      </div>
+    `;
+    monthContainer.appendChild(legend);
+  }
+
+  return monthContainer;
+}
+
+function formatDate(date) {
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const day = String(date.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
+}
+</script>
+
+{% endblock %}
