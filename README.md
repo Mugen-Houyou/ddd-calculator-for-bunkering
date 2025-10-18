@@ -1,8 +1,8 @@
 벙커링 DDD 계산기 — FastAPI + Jinja UI
 
 개요
-- 벙커링에서 DDD(Days after Delivery) 기준의 지급기일을 계산하기 위한 FastAPI 기반 클린 아키텍처 프로젝트입니다.
-- Jinja 템플릿 기반의 웹 UI를 제공하며, 밝은 그라디언트/글라스 카드 스타일(참고: pdfm.asdv.cx/pdf-merger 톤)을 적용했습니다.
+- 벙커링에서 DDD(Days after Delivery) 기준의 지급기일을 계산하기 위한 프로젝트입니다.
+- Python FastAPI 기반 백엔드, Jinja 템플릿 기반의 웹 UI를 제공하며, 밝은 그라디언트/글라스 카드 스타일을 적용했습니다.
 
 실행(개발)
 - 가상환경 생성 및 의존성 설치:
