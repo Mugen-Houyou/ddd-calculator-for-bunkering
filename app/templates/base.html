@@ -1,9 +1,32 @@
 <!doctype html>
-<html lang="en">
+<html lang="{{ 'ko' if t and t.get('app_title') and '벙커링' in t['app_title'] else 'en' }}">
   <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>{{ title or 'DDD Calculator' }}</title>
+
+    <!-- Primary Meta Tags -->
+    <title>{{ t.app_title if t else 'DDD Calculator' }}</title>
+    <meta name="title" content="{{ t.app_title if t else 'DDD Calculator' }}">
+    <meta name="description" content="{{ t.app_subtitle if t else 'Compute due dates by Days after Delivery (DDD) terms.' }}">
+    <meta name="keywords" content="DDD, Days after Delivery, payment terms, due date calculator, bunkering, maritime, shipping, COD, CIA">
+    <meta name="author" content="Mugen-Houyou">
+
+    <!-- Open Graph / Facebook -->
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="{{ request.url }}">
+    <meta property="og:title" content="{{ t.app_title if t else 'DDD Calculator' }}">
+    <meta property="og:description" content="{{ t.app_subtitle if t else 'Compute due dates by Days after Delivery (DDD) terms.' }}">
+    <meta property="og:site_name" content="DDD Calculator">
+
+    <!-- Twitter -->
+    <meta name="twitter:card" content="summary">
+    <meta name="twitter:url" content="{{ request.url }}">
+    <meta name="twitter:title" content="{{ t.app_title if t else 'DDD Calculator' }}">
+    <meta name="twitter:description" content="{{ t.app_subtitle if t else 'Compute due dates by Days after Delivery (DDD) terms.' }}">
+
+    <!-- Canonical URL -->
+    <link rel="canonical" href="{{ request.url }}">
+
     <link rel="stylesheet" as="style" crossorigin href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard-dynamic-subset.min.css">
     <link rel="stylesheet" href="/static/style.css">
   </head>
@@ -18,7 +41,9 @@
       </main>
       <footer class="site-footer">
         <p>
-          Copyright © 2025-2025 Mugen-Houyou - All Rights Reserved.<br>
+        Copyright © 2025-{{ current_year }} <a href="https://github.com/Mugen-Houyou" target="_blank" rel="noopener">Mugen-Houyou</a> - All Rights Reserved.
+        </p>
+        <p>
           <a href="https://github.com/Mugen-Houyou/ddd-calculator-for-bunkering" target="_blank" rel="noopener noreferrer">GitHub Repository</a> |
           Licensed under <a href="https://www.gnu.org/licenses/agpl-3.0.en.html" target="_blank" rel="noopener noreferrer">GNU Affero General Public License v3.0 (AGPLv3)</a>
         </p>

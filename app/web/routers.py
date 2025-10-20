@@ -1,3 +1,5 @@
+from datetime import datetime
+
 from fastapi import APIRouter, Request
 from fastapi.responses import HTMLResponse
 from fastapi.templating import Jinja2Templates
@@ -19,5 +21,5 @@ def index(request: Request):
 
     return templates.TemplateResponse(
         "index.html",
-        {"request": request, "t": t},
+        {"request": request, "t": t, "current_year": datetime.now().year},
     )

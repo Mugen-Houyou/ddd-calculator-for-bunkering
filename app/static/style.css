@@ -329,15 +329,19 @@ button.primary:hover { transform: translateY(-1px); box-shadow: 0 15px 35px -15p
 }
 
 .site-footer p {
-  margin: 0;
+  display: block;
+  margin-block-start: 1em;
+  margin-block-end: 1em;
+  margin-inline-start: 0px;
+  margin-inline-end: 0px;
+  unicode-bidi: isolate;
 }
 
 .site-footer a {
-  color: var(--primary);
-  text-decoration: none;
-  transition: color 0.2s;
+    color: inherit;
+    font-weight: 600;
+    text-decoration: none;
 }
-
 .site-footer a:hover {
   color: var(--accent);
   text-decoration: underline;
