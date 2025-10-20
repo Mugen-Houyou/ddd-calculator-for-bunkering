@@ -14,6 +14,10 @@ TRANSLATIONS = {
         "calculate_button": "지급기일 계산",
         "example_text": "예시: 배송일 2025-05-01 + 30 DDD → 2025-05-31",
 
+        # Checkboxes
+        "include_weekends": "주말을 DDD에 포함",
+        "include_delivery_as_day_one": "공급당일을 1DDD로 포함",
+
         # Payment terms
         "ddd_full": "DDD (Days after Delivery)",
         "cod_full": "COD",
@@ -57,6 +61,10 @@ TRANSLATIONS = {
         "days_label": "Days (e.g., 30)",
         "calculate_button": "Calculate Due Date",
         "example_text": "Example: Delivery 2025-05-01 + 30 DDD → 2025-05-31",
+
+        # Checkboxes
+        "include_weekends": "Include weekends in DDD",
+        "include_delivery_as_day_one": "Count delivery date as Day 1",
 
         # Payment terms
         "ddd_full": "DDD (Days after Delivery)",

@@ -2,17 +2,16 @@
 {% block content %}
 
 <section class="card">
-  <form id="calcForm" action="/calculate" method="post">
+  <form id="calcForm">
     <div class="row">
       <label for="yyyy">{{ t.delivery_date }}</label>
       <div class="segments">
-        <input type="text" id="yyyy" inputmode="numeric" pattern="\d{4}" maxlength="4" placeholder="YYYY" aria-label="Year" value="{{ (form.yyyy if form else '') }}" required>
+        <input type="text" id="yyyy" inputmode="numeric" pattern="\d{4}" maxlength="4" placeholder="YYYY" aria-label="Year" value="" required>
         <span class="seg-sep">-</span>
-        <input type="text" id="mm" inputmode="numeric" pattern="\d{1,2}" maxlength="2" placeholder="MM" aria-label="Month" value="{{ (form.mm if form else '') }}" required>
+        <input type="text" id="mm" inputmode="numeric" pattern="\d{1,2}" maxlength="2" placeholder="MM" aria-label="Month" value="" required>
         <span class="seg-sep">-</span>
-        <input type="text" id="dd" inputmode="numeric" pattern="\d{1,2}" maxlength="2" placeholder="DD" aria-label="Day" value="{{ (form.dd if form else '') }}" required>
+        <input type="text" id="dd" inputmode="numeric" pattern="\d{1,2}" maxlength="2" placeholder="DD" aria-label="Day" value="" required>
       </div>
-      <input type="hidden" id="delivery_date" name="delivery_date" value="">
     </div>
 
     <div class="row">
@@ -72,19 +71,31 @@
           <option value="ZA" data-name="South Africa">South Africa</option>
         </optgroup>
       </select>
-      <div id="countryHiddenInputs"></div>
     </div>
 
     <div class="row-grid">
       <label for="term_kind">{{ t.payment_term }}
-        <select id="term_kind" name="term_kind" required onchange="toggleDays(this.value)">
-          <option value="DDD" {% if not form or form.term_kind=='DDD' %}selected{% endif %}>{{ t.ddd_full }}</option>
-          <option value="COD" {% if form and form.term_kind=='COD' %}selected{% endif %}>{{ t.cod_full }}</option>
-          <option value="CIA" {% if form and form.term_kind=='CIA' %}selected{% endif %}>{{ t.cia_full }}</option>
+        <select id="term_kind" required onchange="toggleDays(this.value)">
+          <option value="DDD" selected>{{ t.ddd_full }}</option>
+          <option value="COD">{{ t.cod_full }}</option>
+          <option value="CIA">{{ t.cia_full }}</option>
         </select>
       </label>
       <div id="days_wrap">
-        <input type="number" id="days" name="days" placeholder="{{ t.days_label }}" aria-label="Days for DDD" min="0" step="1" value="{{ (form.days if form else '') }}">
+        <input type="number" id="days" placeholder="{{ t.days_label }}" aria-label="Days for DDD" min="0" step="1" value="">
+      </div>
+    </div>
+
+    <div class="row" style="margin-top: 16px;">
+      <div style="display: flex; flex-direction: column; gap: 10px;">
+        <label style="display: flex; align-items: center; cursor: pointer;">
+          <input type="checkbox" id="includeWeekends" style="margin-right: 8px; cursor: pointer;" checked>
+          <span>{{ t.include_weekends }}</span>
+        </label>
+        <label style="display: flex; align-items: center; cursor: pointer;">
+          <input type="checkbox" id="includeDeliveryAsDayOne" style="margin-right: 8px; cursor: pointer;" checked>
+          <span>{{ t.include_delivery_as_day_one }}</span>
+        </label>
       </div>
     </div>
 
@@ -98,75 +109,22 @@
     <ul id="clientErrorList"></ul>
   </section>
 
-  {% if errors and errors|length %}
-    <section class="errors" aria-live="polite">
-      <ul>
-        {% for e in errors %}
-          <li>{{ e }}</li>
-        {% endfor %}
-      </ul>
-    </section>
-  {% endif %}
-
-  {% if result %}
-    <section class="result" style="margin-top: 20px;">
-      <div class="card">
-        <h2 style="margin-top: 0; font-size: 1.8rem; color: var(--primary);">{{ t.result_title }}: {{ result.due_date }}</h2>
-
-        <div style="margin-top: 16px; padding: 12px; background: rgba(37, 99, 235, 0.05); border-radius: 12px; border-left: 4px solid var(--primary);">
-          <p style="margin: 4px 0;"><strong>{{ t.delivery }}:</strong> {{ result.delivery_date }} + {{ result.days }} DDD</p>
-          <p style="margin: 4px 0;"><strong>{{ t.countries }}:</strong> {{ result.country_codes|join(', ') }}</p>
-        </div>
-
-        {% if result.excluded_weekends or result.excluded_holidays %}
-          <div style="margin-top: 16px;">
-            <h3 style="font-size: 1.1rem; margin-bottom: 8px;">{{ t.excluded_days }}</h3>
-
-            <!-- Calendar Visualization -->
-            <div id="calendarView" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 16px; margin-bottom: 16px;"></div>
-
-            {% if result.excluded_weekends %}
-              <details style="margin-bottom: 8px;">
-                <summary style="cursor: pointer; font-weight: 600; color: var(--muted); padding: 8px; background: rgba(148, 163, 184, 0.1); border-radius: 8px;">
-                  {{ t.weekends }} ({{ result.excluded_weekends|length }})
-                </summary>
-                <div style="margin-top: 8px; padding: 8px; max-height: 150px; overflow-y: auto;">
-                  {% for weekend in result.excluded_weekends %}
-                    <span class="date-badge">{{ weekend }}</span>
-                  {% endfor %}
-                </div>
-              </details>
-            {% endif %}
-
-            {% if result.excluded_holidays %}
-              <details style="margin-bottom: 8px;">
-                <summary style="cursor: pointer; font-weight: 600; color: var(--success); padding: 8px; background: rgba(18, 128, 90, 0.08); border-radius: 8px;">
-                  {{ t.holidays }} ({{ result.excluded_holidays|length }})
-                </summary>
-                <div style="margin-top: 8px; padding: 8px; max-height: 150px; overflow-y: auto;">
-                  {% for holiday in result.excluded_holidays %}
-                    <span class="date-badge holiday">{{ holiday }}</span>
-                  {% endfor %}
-                </div>
-              </details>
-            {% endif %}
-          </div>
-        {% endif %}
-      </div>
-    </section>
-  {% endif %}
+  <section id="resultSection" class="result" style="margin-top: 20px; display: none;">
+    <!-- Results will be rendered here by JavaScript -->
+  </section>
 </section>
 
 <script>
+// 번역 객체를 전역으로 노출 (app.js에서 사용)
+window.translations = {{ t | tojson }};
+
 // Country selection management
 let selectedCountries = new Set();
 
 function renderCountryTags() {
   const container = document.getElementById('selectedCountries');
-  const hiddenContainer = document.getElementById('countryHiddenInputs');
 
   container.innerHTML = '';
-  hiddenContainer.innerHTML = '';
 
   if (selectedCountries.size === 0) {
     container.innerHTML = '<span style="color: #999;">{{ t.no_countries }}</span>';
@@ -185,13 +143,6 @@ function renderCountryTags() {
       <button type="button" class="remove-tag" onclick="removeCountry('${code}')" aria-label="Remove ${name}">×</button>
     `;
     container.appendChild(tag);
-
-    // Create hidden input for form submission
-    const hidden = document.createElement('input');
-    hidden.type = 'hidden';
-    hidden.name = 'country_code';
-    hidden.value = code;
-    hiddenContainer.appendChild(hidden);
   });
 }
 
@@ -210,14 +161,8 @@ function removeCountry(code) {
 function initCountrySelector() {
   const selector = document.getElementById('countrySelector');
 
-  // Initialize with form values or default to KR
-  {% if form and form.country_codes %}
-    {% for code in form.country_codes %}
-      selectedCountries.add('{{ code }}');
-    {% endfor %}
-  {% else %}
-    selectedCountries.add('KR');
-  {% endif %}
+  // Initialize with default country (KR)
+  selectedCountries.add('KR');
 
   renderCountryTags();
 
@@ -248,10 +193,6 @@ function setupSegments() {
   const y = document.getElementById('yyyy');
   const m = document.getElementById('mm');
   const d = document.getElementById('dd');
-  const hidden = document.getElementById('delivery_date');
-  const form = document.getElementById('calcForm');
-  const errBox = document.getElementById('clientErrors');
-  const errList = document.getElementById('clientErrorList');
 
   [y, m, d].forEach((el) => {
     el.addEventListener('input', (e) => {
@@ -274,23 +215,6 @@ function setupSegments() {
       }
     });
   });
-
-  form.addEventListener('submit', (e) => {
-    errList.innerHTML = '';
-    errBox.style.display = 'none';
-    const yy = y.value;
-    const mm = m.value;
-    const dd = d.value;
-    if (yy.length !== 4 || !mm || !dd || !isValidIsoDate(yy, mm, dd)) {
-      e.preventDefault();
-      const li = document.createElement('li');
-      li.textContent = '{{ t.valid_date_required }}';
-      errList.appendChild(li);
-      errBox.style.display = 'block';
-      return false;
-    }
-    hidden.value = `${yy}-${pad2(mm)}-${pad2(dd)}`;
-  });
 }
 
 document.addEventListener('DOMContentLoaded', () => {
@@ -298,16 +222,6 @@ document.addEventListener('DOMContentLoaded', () => {
   setupSegments();
   const sel = document.getElementById('term_kind');
   toggleDays(sel.value);
-
-  // Render calendar if result exists
-  {% if result %}
-    const deliveryDate = '{{ result.delivery_date }}';
-    const dueDate = '{{ result.due_date }}';
-    const excludedWeekends = {{ result.excluded_weekends | tojson }};
-    const excludedHolidays = {{ result.excluded_holidays | tojson }};
-    const holidayNames = {{ result.holiday_names | tojson }};
-    renderCalendar(deliveryDate, dueDate, excludedWeekends, excludedHolidays, holidayNames);
-  {% endif %}
 });
 
 function toggleDays(kind) {

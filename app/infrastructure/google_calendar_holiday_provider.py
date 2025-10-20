@@ -71,7 +71,8 @@ class GoogleCalendarHolidayProvider(HolidayProvider):
         """
         self.api_key = api_key
         self._service = None
-        self._cache: dict[tuple[str, date, date], dict[date, str]] = {}
+        # 연도별 메모리 캐시: {(country_code, year): {date: holiday_name}}
+        self._cache: dict[tuple[str, int], dict[date, str]] = {}
 
         # 캐시 디렉토리 설정
         if cache_dir is None:
@@ -87,14 +88,14 @@ class GoogleCalendarHolidayProvider(HolidayProvider):
             self._service = build("calendar", "v3", developerKey=self.api_key)
         return self._service
 
-    def _get_cache_file_path(self, country_code: str, start_date: date, end_date: date) -> Path:
-        """캐시 파일 경로를 생성합니다."""
-        cache_key = f"{country_code}_{start_date.isoformat()}_{end_date.isoformat()}.json"
+    def _get_cache_file_path(self, country_code: str, year: int) -> Path:
+        """연도별 캐시 파일 경로를 생성합니다."""
+        cache_key = f"{country_code}_{year}.json"
         return self.cache_dir / cache_key
 
-    def _load_cache(self, country_code: str, start_date: date, end_date: date) -> Optional[dict[date, str]]:
-        """파일에서 캐시를 로드합니다. 만료된 캐시는 None을 반환합니다."""
-        cache_file = self._get_cache_file_path(country_code, start_date, end_date)
+    def _load_cache(self, country_code: str, year: int) -> Optional[dict[date, str]]:
+        """연도별 파일에서 캐시를 로드합니다. 만료된 캐시는 None을 반환합니다."""
+        cache_file = self._get_cache_file_path(country_code, year)
 
         if not cache_file.exists():
             return None
@@ -124,9 +125,9 @@ class GoogleCalendarHolidayProvider(HolidayProvider):
             print(f"Error loading cache: {e}")
             return None
 
-    def _save_cache(self, country_code: str, start_date: date, end_date: date, holidays: dict[date, str]):
-        """캐시를 파일에 저장합니다."""
-        cache_file = self._get_cache_file_path(country_code, start_date, end_date)
+    def _save_cache(self, country_code: str, year: int, holidays: dict[date, str]):
+        """연도별 캐시를 파일에 저장합니다."""
+        cache_file = self._get_cache_file_path(country_code, year)
 
         try:
             cache_data = {
@@ -140,44 +141,26 @@ class GoogleCalendarHolidayProvider(HolidayProvider):
         except OSError as e:
             print(f"Error saving cache: {e}")
 
-    def get_holidays(
-        self, country_code: str, start_date: date, end_date: date
-    ) -> dict[date, str]:
-        """
-        특정 기간의 공휴일 목록을 조회합니다.
-
-        Args:
-            country_code: 국가 코드 (예: 'KR', 'US', 'SG')
-            start_date: 조회 시작일
-            end_date: 조회 종료일
-
-        Returns:
-            공휴일 날짜와 이름의 딕셔너리 {date: holiday_name}
-        """
-        # 메모리 캐시 확인
-        cache_key = (country_code, start_date, end_date)
-        if cache_key in self._cache:
-            return self._cache[cache_key]
-
-        # 파일 캐시 확인
-        cached_holidays = self._load_cache(country_code, start_date, end_date)
-        if cached_holidays is not None:
-            self._cache[cache_key] = cached_holidays
-            return cached_holidays
-
-        calendar_id = self.CALENDAR_IDS.get(country_code.upper())
-        if not calendar_id:
-            # 지원하지 않는 국가는 빈 딕셔너리 반환
-            return {}
-
+    def _fetch_year_holidays(self, country_code: str, year: int, calendar_id: str) -> dict[date, str]:
+        """특정 연도의 모든 공휴일을 Google API에서 가져옵니다."""
         holidays = {}
 
         try:
             service = self._get_service()
 
-            # Google Calendar API는 datetime을 RFC3339 형식으로 요구
-            time_min = datetime.combine(start_date, datetime.min.time()).isoformat() + "Z"
-            time_max = datetime.combine(end_date, datetime.max.time()).isoformat() + "Z"
+            # 해당 연도 전체 기간
+            year_start = date(year, 1, 1)
+            year_end = date(year, 12, 31)
+
+            time_min = datetime.combine(year_start, datetime.min.time()).isoformat() + "Z"
+            time_max = datetime.combine(year_end, datetime.max.time()).isoformat() + "Z"
+
+            # API 요청 정보 로깅
+            api_url = f"https://www.googleapis.com/calendar/v3/calendars/{calendar_id}/events"
+            print(f"[Google Calendar API Request]")
+            print(f"  Method: GET")
+            print(f"  URL: {api_url}")
+            print(f"  Params: timeMin={time_min}, timeMax={time_max}, singleEvents=True, orderBy=startTime")
 
             events_result = (
                 service.events()
@@ -206,17 +189,70 @@ class GoogleCalendarHolidayProvider(HolidayProvider):
                         holidays[holiday_date] = holiday_name
 
         except HttpError as error:
-            # API 오류 발생 시 빈 딕셔너리 반환 (에러 로깅은 상위 레이어에서 처리)
             print(f"Google Calendar API error: {error}")
-            return {}
-
-        # 메모리 캐시에 저장
-        self._cache[cache_key] = holidays
-
-        # 파일 캐시에 저장 (일주일 동안 유지)
-        self._save_cache(country_code, start_date, end_date, holidays)
 
         return holidays
+
+    def get_holidays(
+        self, country_code: str, start_date: date, end_date: date
+    ) -> dict[date, str]:
+        """
+        특정 기간의 공휴일 목록을 조회합니다.
+
+        Args:
+            country_code: 국가 코드 (예: 'KR', 'US', 'SG')
+            start_date: 조회 시작일
+            end_date: 조회 종료일
+
+        Returns:
+            공휴일 날짜와 이름의 딕셔너리 {date: holiday_name}
+        """
+        calendar_id = self.CALENDAR_IDS.get(country_code.upper())
+        if not calendar_id:
+            # 지원하지 않는 국가는 빈 딕셔너리 반환
+            return {}
+
+        # 필요한 연도들 추출
+        years = set()
+        current_year = start_date.year
+        while current_year <= end_date.year:
+            years.add(current_year)
+            current_year += 1
+
+        # 모든 연도의 공휴일을 수집
+        all_holidays: dict[date, str] = {}
+
+        for year in sorted(years):
+            cache_key = (country_code, year)
+
+            # 메모리 캐시 확인
+            if cache_key in self._cache:
+                year_holidays = self._cache[cache_key]
+            else:
+                # 파일 캐시 확인
+                year_holidays = self._load_cache(country_code, year)
+
+                if year_holidays is None:
+                    # 캐시가 없으면 API에서 가져오기
+                    year_holidays = self._fetch_year_holidays(country_code, year, calendar_id)
+
+                    # 파일 캐시에 저장
+                    self._save_cache(country_code, year, year_holidays)
+
+                # 메모리 캐시에 저장
+                self._cache[cache_key] = year_holidays
+
+            # 결과에 병합
+            all_holidays.update(year_holidays)
+
+        # 요청된 기간에 해당하는 공휴일만 필터링
+        filtered_holidays = {
+            dt: name
+            for dt, name in all_holidays.items()
+            if start_date <= dt <= end_date
+        }
+
+        return filtered_holidays
 
     def is_holiday(self, country_code: str, check_date: date) -> bool:
         """

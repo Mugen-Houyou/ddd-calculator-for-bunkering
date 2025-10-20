@@ -26,13 +26,16 @@ def calculate_due_date(
         if term.days is None:
             raise ValueError("DDD term requires 'days'")
 
+        # 공급당일을 1DDD로 포함하는 경우, days를 1 감소
+        effective_days = term.days - 1 if term.include_delivery_as_day_one else term.days
+
         # 공휴일 조회 (필요한 경우)
         holidays: set[date] = set()
         holiday_names_map: dict[date, dict[str, str]] = {}
         if term.skip_holidays and holiday_provider is not None:
             # 예상 기간보다 넉넉하게 조회 (최대 2배 기간)
             # 주말/공휴일을 제외하므로 실제 소요 일수가 더 길 수 있음
-            max_days = term.days * 2 + 30
+            max_days = effective_days * 2 + 30
             end_date = delivery.delivery_date + timedelta(days=max_days)
 
             # 여러 국가의 공휴일을 병합 (국가별로 추적)
@@ -51,7 +54,7 @@ def calculate_due_date(
         # 영업일 기준 날짜 계산
         due_date, excluded_weekends, excluded_holidays = DateCalculator.add_business_days(
             delivery.delivery_date,
-            term.days,
+            effective_days,
             skip_weekends=term.skip_weekends,
             skip_holidays=term.skip_holidays,
             holidays=holidays,
