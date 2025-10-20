@@ -80,6 +80,7 @@ function setupFormSubmit() {
 
     // 체크박스 값 읽기
     const includeWeekends = document.getElementById('includeWeekends').checked;
+    const includeHolidays = document.getElementById('includeHolidays').checked;
     const includeDeliveryAsDayOne = document.getElementById('includeDeliveryAsDayOne').checked;
 
     // API 요청 데이터 구성
@@ -89,7 +90,7 @@ function setupFormSubmit() {
       term_kind: termKind,
       days: termDays,
       skip_weekends: !includeWeekends,  // 체크하면 주말 포함 (skip_weekends=false)
-      skip_holidays: true,
+      skip_holidays: !includeHolidays,  // 체크하면 공휴일 포함 (skip_holidays=false)
       include_delivery_as_day_one: includeDeliveryAsDayOne,
     };
 

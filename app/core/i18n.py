@@ -16,6 +16,7 @@ TRANSLATIONS = {
 
         # Checkboxes
         "include_weekends": "주말을 DDD에 포함",
+        "include_holidays": "공휴일을 DDD에 포함",
         "include_delivery_as_day_one": "공급당일을 1DDD로 포함",
 
         # Payment terms
@@ -64,6 +65,7 @@ TRANSLATIONS = {
 
         # Checkboxes
         "include_weekends": "Include weekends in DDD",
+        "include_holidays": "Include holidays in DDD",
         "include_delivery_as_day_one": "Count delivery date as Day 1",
 
         # Payment terms
