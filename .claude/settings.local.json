@@ -1,9 +1,0 @@
-{
-  "permissions": {
-    "allow": [
-      "WebFetch(domain:pdfm.asdv.cx)"
-    ],
-    "deny": [],
-    "ask": []
-  }
-}

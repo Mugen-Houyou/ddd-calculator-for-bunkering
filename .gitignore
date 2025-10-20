@@ -7,3 +7,6 @@ __pycache__/
 data/
 CLAUDE.md
 .cache/
+
+# Claude Code local settings only
+.claude/settings.local.json
