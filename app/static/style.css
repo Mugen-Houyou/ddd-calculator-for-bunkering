@@ -47,6 +47,10 @@ label { color: var(--text); font-size: 0.95rem; font-weight: 600; }
 input, select { padding: 12px 14px; border-radius: 12px; border: 1px solid rgba(148,163,184,.45); background: rgba(255,255,255,.9); color: var(--text); font-size: .95rem; }
 input:focus, select:focus { outline: none; border-color: rgba(148,163,184,.8); }
 
+div#days_wrap > input#days {
+  width:100%;
+}
+
 /* Ensure Payment Term dropdown fills its grid cell on major browsers */
 #term_kind {
   width: 100%;
