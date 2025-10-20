@@ -221,6 +221,13 @@ button.primary:hover { transform: translateY(-1px); box-shadow: 0 15px 35px -15p
   font-weight: 700;
 }
 
+.calendar-day.holiday {
+  background: rgba(18, 128, 90, 0.1);
+  border-color: rgba(18, 128, 90, 0.3);
+  color: var(--success);
+  font-weight: 600;
+}
+
 .calendar-day.excluded-holiday {
   background: rgba(18, 128, 90, 0.2);
   border-color: rgba(18, 128, 90, 0.4);
@@ -280,6 +287,10 @@ button.primary:hover { transform: translateY(-1px); box-shadow: 0 15px 35px -15p
 }
 
 .legend-color.holiday {
+  background: rgba(18, 128, 90, 0.1);
+}
+
+.legend-color.excluded-holiday {
   background: rgba(18, 128, 90, 0.2);
 }
 

@@ -89,11 +89,11 @@
     <div class="row" style="margin-top: 16px;">
       <div style="display: flex; flex-direction: column; gap: 10px;">
         <label style="display: flex; align-items: center; cursor: pointer;">
-          <input type="checkbox" id="includeWeekends" style="margin-right: 8px; cursor: pointer;">
+          <input type="checkbox" id="includeWeekends" style="margin-right: 8px; cursor: pointer;" checked>
           <span>{{ t.include_weekends }}</span>
         </label>
         <label style="display: flex; align-items: center; cursor: pointer;">
-          <input type="checkbox" id="includeHolidays" style="margin-right: 8px; cursor: pointer;">
+          <input type="checkbox" id="includeHolidays" style="margin-right: 8px; cursor: pointer;" checked>
           <span>{{ t.include_holidays }}</span>
         </label>
         <label style="display: flex; align-items: center; cursor: pointer;">
@@ -423,9 +423,8 @@ function renderMonthCalendar(monthDate, delivery, due, excludedWeekendSet, exclu
       dayCell.classList.add('due-date');
       dayCell.dataset.tooltip = 'Due Date';
     }
-    // Check if it's an excluded holiday
-    else if (excludedHolidaySet.has(dateString)) {
-      dayCell.classList.add('excluded-holiday');
+    // Check if it's a holiday (whether excluded or not)
+    else if (holidayNames[dateString]) {
       // Build tooltip with holiday name(s) and country
       // holidayNames structure: {date_string: {country_code: holiday_name}}
       const countriesData = holidayNames[dateString] || {};
@@ -438,6 +437,13 @@ function renderMonthCalendar(monthDate, delivery, due, excludedWeekendSet, exclu
 
       const tooltipText = tooltipParts.length > 0 ? tooltipParts.join(', ') : 'Holiday';
       dayCell.dataset.tooltip = tooltipText;
+
+      // Add appropriate class based on whether it was excluded from calculation
+      if (excludedHolidaySet.has(dateString)) {
+        dayCell.classList.add('excluded-holiday');
+      } else {
+        dayCell.classList.add('holiday');
+      }
     }
     // Check if it's an excluded weekend
     else if (excludedWeekendSet.has(dateString)) {
@@ -479,7 +485,11 @@ function renderMonthCalendar(monthDate, delivery, due, excludedWeekendSet, exclu
       </div>
       <div class="legend-item">
         <div class="legend-color holiday"></div>
-        <span>Holiday</span>
+        <span>Holiday (Included)</span>
+      </div>
+      <div class="legend-item">
+        <div class="legend-color excluded-holiday"></div>
+        <span>Holiday (Excluded)</span>
       </div>
     `;
     monthContainer.appendChild(legend);

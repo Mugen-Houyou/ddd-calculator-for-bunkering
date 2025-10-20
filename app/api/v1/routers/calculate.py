@@ -58,8 +58,9 @@ def calculate(
     term_kind = request.term_kind.strip().upper()
 
     # Google Calendar API 초기화 (API Key가 있는 경우)
+    # 달력 표시를 위해 항상 공휴일 정보 로드
     holiday_provider = None
-    if settings.google_cal_api_key and request.skip_holidays:
+    if settings.google_cal_api_key:
         holiday_provider = GoogleCalendarHolidayProvider(settings.google_cal_api_key)
 
     # DDD 계산
