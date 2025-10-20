@@ -1,47 +1,137 @@
 벙커링 DDD 계산기 — FastAPI + Jinja UI
 
-개요
+## 개요
 - 벙커링에서 DDD(Days after Delivery) 기준의 지급기일을 계산하기 위한 프로젝트입니다.
-- Python FastAPI 기반 백엔드, Jinja 템플릿 기반의 웹 UI를 제공하며, 밝은 그라디언트/글라스 카드 스타일을 적용했습니다.
+- Python FastAPI 기반 REST API, Jinja 템플릿 기반의 웹 UI를 제공하며, 밝은 그라디언트/글라스 카드 스타일을 적용했습니다.
+- Google Calendar API를 통한 다국가 공휴일 조회 및 연도별 캐싱을 지원합니다.
 
-실행(개발)
-- 가상환경 생성 및 의존성 설치:
-  - python -m venv .venv
-  - .venv\Scripts\activate
-  - pip install -r requirements.txt
-- 서버 시작:
-  - uvicorn app.main:app --reload
-- UI 열기: http://127.0.0.1:8000/
+## 실행(개발)
+### 환경 설정
+1. 가상환경 생성 및 의존성 설치:
+   ```bash
+   python -m venv .venv
+   .venv\Scripts\activate  # Windows
+   # source .venv/bin/activate  # macOS/Linux
+   pip install -r requirements.txt
+   ```
 
-사용 방법 (웹 UI)
-- 날짜 입력: 연/월/일 세그먼트(YYYY-MM-DD)로 입력합니다.
-  - 연도 4자리 입력 후 자동으로 월로 포커스 이동, 월 2자리 후 일로 이동
-  - 제출 시 유효성 검증 후 ISO 형식으로 결합되어 서버로 전송
-- Payment Term: 드롭다운(DDD/COD/CIA), 가용 너비를 채우도록 브라우저별 폭 처리(-webkit-fill-available, -moz-available)
-- Days(for DDD): 동일 행(row)에 인라인으로 표시, DDD일 때만 활성화/표시
-- Sticky Form: 계산 이후에도 입력값이 유지되어 수정이 편리합니다.
+2. 환경 변수 설정 (`.env` 파일 생성):
+   ```
+   GOOGLE_CAL_API_KEY=your_google_api_key_here
+   ```
 
-프로젝트 구조(클린 레이어링)
-- app/
-  - core/           - 설정, 앱 팩토리 헬퍼
-  - api/            - FastAPI 라우터/의존성 (헬스 등)
-  - web/            - 웹 라우터(Jinja 템플릿 렌더)
-  - templates/      - Jinja 템플릿(`base.html`, `index.html`)
-  - static/         - 정적 자원(CSS 등)
-  - domain/         - 도메인 엔티티/값 객체(순수 파이썬)
-  - use_cases/      - 애플리케이션 서비스(DDD 계산 등)
-  - infrastructure/ - 외부 시스템 어댑터(필요 시)
+3. 서버 시작:
+   ```bash
+   uvicorn app.main:app --reload
+   ```
 
-엔드포인트
-- GET /v1/health — 헬스 체크(준비 상태)
-- GET / — 웹 UI(지급기일 계산 폼)
-- POST /calculate — 폼 제출 처리(서버 측 계산)
+4. UI 열기: http://127.0.0.1:8000/
 
-디자인 메모
-- Pretendard 폰트, 밝은 블루 톤 그라디언트 배경, 유리감 카드, pill 형태의 그라디언트 버튼 적용
-- 드롭다운 폭: `#term_kind { width: 100%; -webkit-fill-available; -moz-available; }`
+## 주요 기능
+### 웹 UI
+- **날짜 입력**: 연/월/일 세그먼트(YYYY-MM-DD)로 입력
+  - 연도 4자리 입력 후 자동으로 월로 포커스 이동
+  - 월 2자리 입력 후 일로 자동 이동
+  - 클라이언트 측 유효성 검증
 
-다음 단계
-- 주말/공휴일 롤링 규칙, 말일 처리 등의 옵션 추가
-- "30ddd" 단일 문자열 파싱 입력 모드 지원
-- 도메인/유스케이스/라우터 단위 테스트 추가
+- **다국가 선택**: 태그 방식으로 여러 국가 선택 가능
+  - 지원 국가: 한국, 일본, 중국, 싱가포르, UAE 등 30+ 국가
+
+- **Payment Term**: DDD / COD / CIA 선택
+  - DDD 선택 시 일수(Days) 입력 필드 활성화
+
+- **옵션**:
+  - ✅ 주말을 DDD에 포함 (체크 시 주말도 계산에 포함)
+  - ✅ 공급당일을 1DDD로 포함 (체크 시 배송일을 첫날로 계산)
+
+- **결과 표시**:
+  - 계산된 결제일 표시
+  - 달력 시각화 (배송일, 결제일, 제외된 주말/공휴일 표시)
+  - 공휴일 상세 정보 (국가별 공휴일 이름)
+
+### REST API
+- 클라이언트-서버 분리 아키텍처
+- JSON 요청/응답 형식
+- Pydantic 모델 기반 검증
+
+### 공휴일 조회
+- Google Calendar API 통합
+- 연도별 캐싱 (`.cache/holidays/{COUNTRY}_{YEAR}.json`)
+- 캐시 만료 기간: 7일
+- 다국가 공휴일 병합 지원
+
+## 프로젝트 구조(클린 레이어링)
+```
+app/
+├── core/              # 설정, i18n, 앱 팩토리
+├── api/v1/routers/    # REST API 엔드포인트
+│   ├── health.py      # 헬스 체크
+│   └── calculate.py   # DDD 계산 API
+├── web/               # 웹 UI 라우터 (Jinja 템플릿 렌더)
+├── templates/         # Jinja 템플릿 (base.html, index.html)
+├── static/            # 정적 자원 (CSS, JavaScript)
+├── domain/            # 도메인 엔티티/값 객체 (순수 Python)
+│   └── ddd/          # DDD 계산 도메인 로직
+├── use_cases/         # 애플리케이션 서비스 (DDD 계산)
+└── infrastructure/    # 외부 시스템 어댑터
+    └── google_calendar_holiday_provider.py
+```
+
+## API 엔드포인트
+
+### 웹 UI
+- `GET /` — 웹 UI (지급기일 계산 폼)
+
+### REST API
+- `GET /api/v1/health` — 헬스 체크
+
+- `POST /api/v1/calculate` — DDD 계산
+
+  **요청 본문**:
+  ```json
+  {
+    "delivery_date": "2025-10-20",
+    "country_codes": ["KR", "SG"],
+    "term_kind": "DDD",
+    "days": 30,
+    "skip_weekends": false,
+    "skip_holidays": true,
+    "include_delivery_as_day_one": true
+  }
+  ```
+
+  **응답**:
+  ```json
+  {
+    "country_codes": ["KR", "SG"],
+    "delivery_date": "2025-10-20",
+    "term_kind": "DDD",
+    "days": 30,
+    "due_date": "2025-11-18",
+    "excluded_weekends": [],
+    "excluded_holidays": ["2025-10-03", "2025-10-09"],
+    "holiday_names": {
+      "2025-10-03": {"KR": "National Foundation Day"},
+      "2025-10-09": {"KR": "Hangeul Proclamation Day"}
+    },
+    "holidays_excluded": true
+  }
+  ```
+
+## 디자인
+- **폰트**: Pretendard (한글/라틴 최적화)
+- **스타일**: 밝은 블루 톤 그라디언트 배경, 글라스모피즘 카드
+- **반응형**: 모바일/태블릿/데스크톱 지원
+- **다국어**: 한국어/영어 자동 감지 (Accept-Language 헤더)
+
+## 캐싱 전략
+- **방식**: 연도별 캐싱 (`{COUNTRY}_{YEAR}.json`)
+- **위치**: `.cache/holidays/`
+- **만료**: 7일 후 자동 invalidate
+- **장점**: 같은 연도 요청 시 캐시 재사용으로 API 호출 최소화
+
+## 다음 단계
+- 말일 처리 규칙 추가
+- 테스트 커버리지 확대 (도메인/유스케이스/라우터)
+- 도커라이징
+- CI/CD 파이프라인 구축
