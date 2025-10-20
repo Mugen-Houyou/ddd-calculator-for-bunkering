@@ -317,6 +317,32 @@ button.primary:hover { transform: translateY(-1px); box-shadow: 0 15px 35px -15p
   border-top-color: rgba(15, 23, 42, 0.95);
 }
 
+/* Footer */
+.site-footer {
+  margin-top: 48px;
+  padding-top: 24px;
+  text-align: center;
+  color: var(--muted);
+  font-size: 0.85rem;
+  line-height: 1.6;
+  border-top: 1px solid rgba(148, 163, 184, 0.2);
+}
+
+.site-footer p {
+  margin: 0;
+}
+
+.site-footer a {
+  color: var(--primary);
+  text-decoration: none;
+  transition: color 0.2s;
+}
+
+.site-footer a:hover {
+  color: var(--accent);
+  text-decoration: underline;
+}
+
 @media (max-width: 640px) {
   .calendar-day {
     font-size: 0.75rem;
@@ -334,5 +360,10 @@ button.primary:hover { transform: translateY(-1px); box-shadow: 0 15px 35px -15p
   .custom-tooltip {
     font-size: 0.75rem;
     padding: 6px 10px;
+  }
+
+  .site-footer {
+    font-size: 0.75rem;
+    margin-top: 32px;
   }
 }
