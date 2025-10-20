@@ -18,6 +18,7 @@ class PaymentTerm:
     skip_weekends: bool = True  # 주말 제외 여부
     skip_holidays: bool = True  # 공휴일 제외 여부
     include_delivery_as_day_one: bool = False  # 공급당일을 1DDD로 포함 (True면 days-1로 계산)
+    adjust_to_weekday: bool = False  # 결제일이 주말/공휴일이면 이전 평일로 조정
 
 
 @dataclass(frozen=True)

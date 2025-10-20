@@ -89,12 +89,16 @@
     <div class="row" style="margin-top: 16px;">
       <div style="display: flex; flex-direction: column; gap: 10px;">
         <label style="display: flex; align-items: center; cursor: pointer;">
-          <input type="checkbox" id="includeWeekends" style="margin-right: 8px; cursor: pointer;" checked>
+          <input type="checkbox" id="includeWeekends" style="margin-right: 8px; cursor: pointer;">
           <span>{{ t.include_weekends }}</span>
         </label>
         <label style="display: flex; align-items: center; cursor: pointer;">
-          <input type="checkbox" id="includeHolidays" style="margin-right: 8px; cursor: pointer;" checked>
+          <input type="checkbox" id="includeHolidays" style="margin-right: 8px; cursor: pointer;">
           <span>{{ t.include_holidays }}</span>
+        </label>
+        <label style="display: flex; align-items: center; cursor: pointer;">
+          <input type="checkbox" id="adjustToWeekday" style="margin-right: 8px; cursor: pointer;" checked>
+          <span>{{ t.adjust_to_weekday }}</span>
         </label>
         <label style="display: flex; align-items: center; cursor: pointer;">
           <input type="checkbox" id="includeDeliveryAsDayOne" style="margin-right: 8px; cursor: pointer;" checked>

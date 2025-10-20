@@ -82,6 +82,7 @@ function setupFormSubmit() {
     const includeWeekends = document.getElementById('includeWeekends').checked;
     const includeHolidays = document.getElementById('includeHolidays').checked;
     const includeDeliveryAsDayOne = document.getElementById('includeDeliveryAsDayOne').checked;
+    const adjustToWeekday = document.getElementById('adjustToWeekday').checked;
 
     // API 요청 데이터 구성
     const requestData = {
@@ -92,6 +93,7 @@ function setupFormSubmit() {
       skip_weekends: !includeWeekends,  // 체크하면 주말 포함 (skip_weekends=false)
       skip_holidays: !includeHolidays,  // 체크하면 공휴일 포함 (skip_holidays=false)
       include_delivery_as_day_one: includeDeliveryAsDayOne,
+      adjust_to_weekday: adjustToWeekday,  // 체크하면 주말/공휴일에 이전 평일로 조정
     };
 
     try {

@@ -22,6 +22,7 @@ class CalculateRequest(BaseModel):
     skip_weekends: bool = Field(True, description="주말 제외 여부")
     skip_holidays: bool = Field(True, description="공휴일 제외 여부")
     include_delivery_as_day_one: bool = Field(False, description="공급당일을 1DDD로 포함 (True면 days-1로 계산)")
+    adjust_to_weekday: bool = Field(False, description="결제일이 주말/공휴일이면 이전 평일로 조정")
 
 
 class CalculateResponse(BaseModel):
@@ -72,6 +73,7 @@ def calculate(
         skip_weekends=request.skip_weekends,
         skip_holidays=request.skip_holidays,
         include_delivery_as_day_one=request.include_delivery_as_day_one,
+        adjust_to_weekday=request.adjust_to_weekday,
     )
 
     due_result = calculate_due_date(delivery_info, payment_term, holiday_provider)

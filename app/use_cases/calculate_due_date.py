@@ -60,6 +60,25 @@ def calculate_due_date(
             holidays=holidays,
         )
 
+        # 결제일이 주말/공휴일이면 이전 평일로 조정
+        if term.adjust_to_weekday:
+            original_due_date = due_date
+            while True:
+                is_weekend = due_date.weekday() in (5, 6)  # Saturday=5, Sunday=6
+                is_holiday = due_date in holidays
+
+                if not is_weekend and not is_holiday:
+                    break
+
+                # 하루 전으로 이동
+                due_date = due_date - timedelta(days=1)
+
+            # 조정으로 인해 지나친 주말/공휴일을 excluded 리스트에서 제거
+            # (조정 후 due_date가 원래 due_date보다 이전이면, 그 사이의 날짜들은 제외 대상이 아님)
+            if due_date < original_due_date:
+                excluded_weekends = [d for d in excluded_weekends if d < due_date or d > original_due_date]
+                excluded_holidays = [d for d in excluded_holidays if d < due_date or d > original_due_date]
+
         return DueDateResult(
             due_date=due_date,
             excluded_weekends=excluded_weekends,
