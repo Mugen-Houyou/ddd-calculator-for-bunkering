@@ -197,6 +197,7 @@ button.primary:hover { transform: translateY(-1px); box-shadow: 0 15px 35px -15p
 .calendar-day {
   aspect-ratio: 1;
   display: flex;
+  flex-direction: column;
   align-items: center;
   justify-content: center;
   font-size: 0.85rem;
@@ -206,6 +207,8 @@ button.primary:hover { transform: translateY(-1px); box-shadow: 0 15px 35px -15p
   color: var(--text);
   position: relative;
   transition: all 0.2s;
+  padding: 4px;
+  gap: 2px;
 }
 
 .calendar-day.empty {
@@ -253,6 +256,36 @@ button.primary:hover { transform: translateY(-1px); box-shadow: 0 15px 35px -15p
   color: white;
   font-weight: 700;
   box-shadow: 0 2px 8px rgba(220, 38, 38, 0.3);
+}
+
+/* 카운팅 숫자 (ruby 스타일) */
+.day-count {
+  font-size: 0.5rem;
+  line-height: 1;
+  color: rgba(0, 0, 0, 0.4);
+  font-weight: 600;
+  height: 0.6rem;
+}
+
+/* 날짜 숫자 */
+.day-number {
+  font-size: 0.85rem;
+  line-height: 1.2;
+}
+
+/* Special dates에서 카운팅 숫자 색상 조정 */
+.calendar-day.delivery-date .day-count,
+.calendar-day.due-date .day-count {
+  color: rgba(255, 255, 255, 0.7);
+}
+
+.calendar-day.excluded-weekend .day-count {
+  color: rgba(0, 0, 0, 0.5);
+}
+
+.calendar-day.holiday .day-count,
+.calendar-day.excluded-holiday .day-count {
+  color: rgba(18, 128, 90, 0.6);
 }
 
 .calendar-legend {
@@ -370,6 +403,15 @@ button.primary:hover { transform: translateY(-1px); box-shadow: 0 15px 35px -15p
   .calendar-day-header {
     font-size: 0.65rem;
     padding: 6px 2px;
+  }
+
+  .day-count {
+    font-size: 0.45rem;
+    height: 0.5rem;
+  }
+
+  .day-number {
+    font-size: 0.75rem;
   }
 
   .calendar-legend {

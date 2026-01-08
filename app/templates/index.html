@@ -322,7 +322,7 @@ function hideTooltip() {
 }
 
 // Calendar visualization
-function renderCalendar(deliveryDate, dueDate, excludedWeekends, excludedHolidays, holidayNames) {
+function renderCalendar(deliveryDate, dueDate, excludedWeekends, excludedHolidays, holidayNames, includeDeliveryAsDayOne) {
   const delivery = new Date(deliveryDate + 'T00:00:00');
   const due = new Date(dueDate + 'T00:00:00');
 
@@ -349,7 +349,8 @@ function renderCalendar(deliveryDate, dueDate, excludedWeekends, excludedHoliday
       due,
       excludedWeekendSet,
       excludedHolidaySet,
-      holidayNames || {}
+      holidayNames || {},
+      includeDeliveryAsDayOne
     );
     container.appendChild(monthCalendar);
 
@@ -358,9 +359,37 @@ function renderCalendar(deliveryDate, dueDate, excludedWeekends, excludedHoliday
   }
 }
 
-function renderMonthCalendar(monthDate, delivery, due, excludedWeekendSet, excludedHolidaySet, holidayNames) {
+function renderMonthCalendar(monthDate, delivery, due, excludedWeekendSet, excludedHolidaySet, holidayNames, includeDeliveryAsDayOne) {
   const year = monthDate.getFullYear();
   const month = monthDate.getMonth();
+
+  // 각 날짜별 카운팅 숫자를 계산
+  const dayCountMap = new Map(); // dateString -> count number
+
+  let currentCount = includeDeliveryAsDayOne ? 1 : 0;
+  let currentDate = new Date(delivery);
+
+  while (currentDate <= due) {
+    const dateStr = formatDate(currentDate);
+    dayCountMap.set(dateStr, currentCount);
+
+    // 다음 날 확인 (제외된 날짜인지 체크)
+    const nextDate = new Date(currentDate);
+    nextDate.setDate(nextDate.getDate() + 1);
+
+    if (nextDate <= due) {
+      const nextDateStr = formatDate(nextDate);
+      // 다음 날이 제외되지 않으면 카운트 증가
+      if (!excludedWeekendSet.has(nextDateStr) &&
+          !excludedHolidaySet.has(nextDateStr)) {
+        currentCount++;
+      }
+      // 제외된 날이면 currentCount 유지 (이전 날과 동일한 숫자)
+    }
+
+    // 다음 날로 이동
+    currentDate.setDate(currentDate.getDate() + 1);
+  }
 
   // Create month container
   const monthContainer = document.createElement('div');
@@ -405,7 +434,17 @@ function renderMonthCalendar(monthDate, delivery, due, excludedWeekendSet, exclu
 
     const dayCell = document.createElement('div');
     dayCell.className = 'calendar-day';
-    dayCell.textContent = day;
+
+    // 카운팅 숫자가 있으면 함께 표시
+    if (dayCountMap.has(dateString)) {
+      const count = dayCountMap.get(dateString);
+      dayCell.innerHTML = `
+        <span class="day-count">${count}</span>
+        <span class="day-number">${day}</span>
+      `;
+    } else {
+      dayCell.textContent = day;
+    }
 
     // Check if it's a weekend
     const dayOfWeek = date.getDay();

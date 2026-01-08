@@ -189,13 +189,17 @@ function renderResult(result) {
   resultSection.innerHTML = html;
   resultSection.style.display = 'block';
 
+  // 체크박스에서 직접 값을 읽어옴 (Backend 변경 불필요!)
+  const includeDeliveryAsDayOne = document.getElementById('includeDeliveryAsDayOne').checked;
+
   // 캘린더 렌더링 (항상 표시)
   renderCalendar(
     result.delivery_date,
     result.due_date,
     result.excluded_weekends,
     result.excluded_holidays,
-    result.holiday_names || {}
+    result.holiday_names || {},
+    includeDeliveryAsDayOne
   );
 }
 
